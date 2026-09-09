@@ -379,7 +379,12 @@ class ConnectRetryStrategy : public Aws::Client::RetryStrategy {
       // Not a connect error, don't retry
       return false;
     }
-    return attempted_retries * retry_interval_ < max_retry_duration_;
+    const bool should_retry = attempted_retries * retry_interval_ < max_retry_duration_;
+    LOG_STORAGE_WARNING_ << fmt::format(
+        "S3 retry: exception_name={}, http_status={}, attempted_retries={}, should_retry={}, message={}",
+        FromAwsString(error.GetExceptionName()), static_cast<int>(error.GetResponseCode()), attempted_retries,
+        should_retry, FromAwsString(error.GetMessage()));
+    return should_retry;
   }
 
   long CalculateDelayBeforeNextRetry(  // NOLINT runtime/int
